@@ -27,13 +27,16 @@
 #import "BoostMessageChannel.h"
 #import "FLB2FlutterContainerManager.h"
 #import "FlutterBoostPlugin2_private.h"
+#import <objc/message.h>
+#import <objc/runtime.h>
 
 #define FLUTTER_APP [FlutterBoostPlugin2 sharedInstance].application
 #define FLUTTER_VIEW FLUTTER_APP.flutterViewController.view
 #define FLUTTER_VC FLUTTER_APP.flutterViewController
 
-@interface FLB2FlutterViewContainer  ()
-@property (nonatomic,copy,readwrite) NSString *name;
+@interface FLB2FlutterViewContainer  (){
+    BOOL _engineNeedsLaunch;
+}
 @property (nonatomic,strong,readwrite) NSDictionary *params;
 @property (nonatomic,assign) long long identifier;
 @end
@@ -55,6 +58,15 @@
     if (self = [super initWithCoder: aDecoder]) {
         NSAssert(NO, @"unsupported init method!");
         [self _setup];
+    }
+    return self;
+}
+
+- (instancetype)initWithProject:(FlutterDartProject*)projectOrNil
+                        nibName:(NSString*)nibNameOrNil
+                         bundle:(NSBundle*)nibBundleOrNil {
+    if (self = [super initWithProject:projectOrNil nibName:nibNameOrNil bundle:nibBundleOrNil]) {
+        _engineNeedsLaunch = YES;
     }
     return self;
 }
@@ -185,7 +197,28 @@ static NSUInteger kInstanceCounter = 0;
         [FlutterBoostPlugin2 sharedInstance].fParams = _params;
     }
     
-    [super viewWillAppear:animated];
+    //following code are implements in super class accordingly. However we eleminated the lifecycleChannel codes
+    if (_engineNeedsLaunch) {
+        NSMethodSignature * (*sendMsg)(id, SEL, id, id) = (__typeof__(sendMsg))objc_msgSend;
+        sendMsg(self.engine, @selector(launchEngine:libraryURI:), nil, nil);
+        [self.engine setViewController:self];
+        _engineNeedsLaunch = NO;
+    }
+    CGSize viewSize = self.view.bounds.size;
+    CGFloat scale = [UIScreen mainScreen].scale;
+    double physical_width = viewSize.width * scale;
+    // Only recreate surface on subsequent appearances when viewport metrics are known.
+    // First time surface creation is done on viewDidLayoutSubviews.
+    if (physical_width)
+        [self surfaceUpdated:YES];
+    //call super's super
+    struct objc_super target = {
+        .super_class = class_getSuperclass([FlutterViewController class]),
+        .receiver = self,
+    };
+    NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
+    callSuper(&target, @selector(viewWillAppear:), animated);
+    
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -201,7 +234,17 @@ static NSUInteger kInstanceCounter = 0;
                                              params:_params
                                            uniqueId:self.uniqueIDString];
     
-    [super viewDidAppear:animated];
+    //following code are implements in super class accordingly. However we eleminated the lifecycleChannel codes
+    [self onLocaleUpdated:nil];
+    [self onUserSettingsChanged:nil];
+    [self onAccessibilityStatusChanged:nil];
+    //call super's super
+    struct objc_super target = {
+        .super_class = class_getSuperclass([FlutterViewController class]),
+        .receiver = self,
+    };
+    NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
+    callSuper(&target, @selector(viewDidAppear:), animated);
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -211,20 +254,36 @@ static NSUInteger kInstanceCounter = 0;
                                                    params:_params
                                                  uniqueId:self.uniqueIDString];
     [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
-    [super viewWillDisappear:animated];
+
+    //following code are implements in super class accordingly. However we eleminated the lifecycleChannel codes
+    struct objc_super target = {
+        .super_class = class_getSuperclass([FlutterViewController class]),
+        .receiver = self,
+    };
+    NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
+    callSuper(&target, @selector(viewWillDisappear:), animated);
 }
 
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-    [super viewDidDisappear:animated];
     
     [FLUTTER_APP resume];
-    
+    NSLog(@"[JDEBUG]-viewDidDisappear-%p", self);
     [BoostMessageChannel didDisappearPageContainer:^(NSNumber *result) {}
                                                 pageName:_name
                                                   params:_params
                                                 uniqueId:self.uniqueIDString];
+    
+    //following code are implements in super class accordingly. However we eleminated the lifecycleChannel codes
+    [self surfaceUpdated:NO];
+    [self flushOngoingTouches];
+    struct objc_super target = {
+        .super_class = class_getSuperclass([FlutterViewController class]),
+        .receiver = self,
+    };
+    NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
+    callSuper(&target, @selector(viewDidDisappear:), animated);
 }
 
 - (void)installSplashScreenViewIfNecessary {

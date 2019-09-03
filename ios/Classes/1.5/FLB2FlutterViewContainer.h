@@ -28,7 +28,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @interface FLB2FlutterViewContainer  : FlutterViewController<FLBFlutterContainer>
+@property (nonatomic,copy,readwrite) NSString *name;
 - (void)surfaceUpdated:(BOOL)appeared;
+- (void)onLocaleUpdated:(NSNotification*)notification;
+- (void)onUserSettingsChanged:(NSNotification*)notification;
+- (void)onAccessibilityStatusChanged:(NSNotification*)notification;
+- (void)flushOngoingTouches;
 - (void)setEnableForRunnersBatch:(BOOL)enable;
 @end
 NS_ASSUME_NONNULL_END
