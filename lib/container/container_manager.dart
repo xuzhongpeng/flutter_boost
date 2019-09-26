@@ -65,7 +65,7 @@ class ContainerManagerState extends State<BoostContainerManager> {
   final ManagerNavigatorObserver _navigatorObserver =
       ManagerNavigatorObserver();
 
-  List<_ContainerOverlayEntry> _leastEntries;
+  // List<_ContainerOverlayEntry> _leastEntries;
 
   BoostContainer _onstage;
   bool _foreground = true;
@@ -149,24 +149,29 @@ class ContainerManagerState extends State<BoostContainerManager> {
       return;
     }
 
-    if (_leastEntries != null && _leastEntries.isNotEmpty) {
-      for (_ContainerOverlayEntry entry in _leastEntries) {
-        entry.remove();
-      }
-    }
+    // if (_leastEntries != null && _leastEntries.isNotEmpty) {
+    //   _leastEntries.clear();
+      // for (_ContainerOverlayEntry entry in _leastEntries) {
+      //   entry.remove();
+      // }
+    // }
 
-    final List<BoostContainer> containers = <BoostContainer>[];
-    containers.addAll(_offstage);
+    // final List<BoostContainer> containers = <BoostContainer>[];
+    // containers.addAll(_offstage);
+    // if(_offstage.length>0){
+    //   containers.add(_offstage.last);
+    // }
 
     assert(_onstage != null, 'Should have a least one BoostContainer');
-    containers.add(_onstage);
+    // containers.add(_onstage);
 
-    _leastEntries = containers
-        .map<_ContainerOverlayEntry>(
-            (BoostContainer container) => _ContainerOverlayEntry(container))
-        .toList(growable: false);
+    // _leastEntries = containers
+    //     .map<_ContainerOverlayEntry>(
+    //         (BoostContainer container) => _ContainerOverlayEntry(container))
+    //     .toList(growable: false);
 
-    overlayState.insertAll(_leastEntries);
+    // overlayState.insertAll(_leastEntries);
+    overlayState.insert(_ContainerOverlayEntry(_onstage));
 
     SchedulerBinding.instance.addPostFrameCallback((Duration timeStamp) {
       final String now = _onstage.settings.uniqueId;

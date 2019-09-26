@@ -16,3 +16,8 @@ flutter_boost2
 example/android/app/.classpath
 example/android/app/.project
 example/android/.project
+example/ios/Runner.xcworkspace
+example/ios/Runner.xcworkspace/xcuserdata
+example/ios/TaobaoEnv
+.vscode/c_cpp_properties.json
+.vscode/launch.json
