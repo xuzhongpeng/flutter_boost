@@ -337,7 +337,7 @@ class _ContainerOverlayEntry extends OverlayEntry {
       : super(
             builder: (BuildContext ctx) => container,
             opaque: true,
-            maintainState: true);
+            maintainState: false);
 
   @override
   void remove() {
