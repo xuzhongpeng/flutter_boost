@@ -215,6 +215,7 @@ class ContainerManagerState extends State<BoostContainerManager> {
   //create a container.
   void showContainer(BoostContainerSettings settings) {
     if (settings.uniqueId == _onstage.settings.uniqueId) {
+      setState(() {});
       _onShownContainerChanged(null, settings.uniqueId);
       return;
     }
