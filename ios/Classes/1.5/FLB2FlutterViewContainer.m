@@ -182,7 +182,6 @@ static NSUInteger kInstanceCounter = 0;
     };
     NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
     callSuper(&target, @selector(viewWillAppear:), animated);
-    NSLog(@"[XDEBUG]---surface changed--willAppear-");
 }
 
 - (void)viewDidAppear:(BOOL)animated
