@@ -81,7 +81,6 @@
 - (void)resume
 {
     [[_engine lifecycleChannel] sendMessage:@"AppLifecycleState.resumed"];
-    [(FLB2FlutterViewContainer *)_engine.viewController surfaceUpdated:YES];
 }
 
 - (void)inactive
@@ -110,7 +109,9 @@
 - (void)atacheToViewController:(FlutterViewController *)vc
 {
     if(_engine.viewController != vc){
+        [(FLB2FlutterViewContainer *)_engine.viewController surfaceUpdated:NO];
         _engine.viewController = vc;
+        NSLog(@"[XDEBUG]---surface changed--changed-");
     }
 }
 
@@ -118,16 +119,15 @@
 {
     if(_engine.viewController != _dummy){
         _engine.viewController = _dummy;
+        NSLog(@"[XDEBUG]---surface changed--dummy-");
     }
 }
 
 - (void)prepareEngineIfNeeded
 {
-//    if ([_dummy respondsToSelector:@selector(setEnableForRunnersBatch:)]) {
-//        [_dummy setEnableForRunnersBatch:YES];
-//    }
-    [self detach];
-    [_dummy surfaceUpdated:YES];
+    [(FLB2FlutterViewContainer *)_engine.viewController surfaceUpdated:NO];
+    NSLog(@"[XDEBUG]---surface changed--reset-");
+//    [self detach];
 }
 
 @end

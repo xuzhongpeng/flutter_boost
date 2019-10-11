@@ -27,6 +27,8 @@
 #import "BoostMessageChannel.h"
 #import "FLB2FlutterContainerManager.h"
 #import "FlutterBoostPlugin2_private.h"
+#import <objc/message.h>
+#import <objc/runtime.h>
 
 #define FLUTTER_APP [FlutterBoostPlugin2 sharedInstance].application
 #define FLUTTER_VIEW FLUTTER_APP.flutterViewController.view
@@ -136,7 +138,6 @@ static NSUInteger kInstanceCounter = 0;
 
 - (void)attatchFlutterEngine
 {
-    [FLUTTER_APP.flutterProvider prepareEngineIfNeeded];
     [FLUTTER_APP.flutterProvider atacheToViewController:self];
 }
 
@@ -160,16 +161,6 @@ static NSUInteger kInstanceCounter = 0;
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    if([FLUTTER_APP contains:self]){
-        [self surfaceUpdated:NO];
-        [self detatchFlutterEngine];
-    }else{
-        [self attatchFlutterEngine];
-        [self surfaceUpdated:YES];
-    }
-  
-    [FLUTTER_APP resume];
-    
     //For new page we should attach flutter view in view will appear
     //for better performance.
  
@@ -183,22 +174,30 @@ static NSUInteger kInstanceCounter = 0;
         [FlutterBoostPlugin2 sharedInstance].fPageId = self.uniqueIDString;
         [FlutterBoostPlugin2 sharedInstance].fParams = _params;
     }
-    
-    [super viewWillAppear:animated];
+ 
+    //instead of calling [super viewWillAppear:animated];, call super's super
+    struct objc_super target = {
+        .super_class = class_getSuperclass([FlutterViewController class]),
+        .receiver = self,
+    };
+    NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
+    callSuper(&target, @selector(viewWillAppear:), animated);
+    NSLog(@"[XDEBUG]---surface changed--willAppear-");
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [FLUTTER_APP addUniqueViewController:self];
-    
     //Ensure flutter view is attached.
     [self attatchFlutterEngine];
-    [FLUTTER_APP resume];
  
     [BoostMessageChannel didShowPageContainer:^(NSNumber *result) {}
                                            pageName:_name
                                              params:_params
                                            uniqueId:self.uniqueIDString];
+    
+    //NOTES：务必在show之后再update，否则有闪烁
+    [self surfaceUpdated:YES];
     
     [super viewDidAppear:animated];
 }
@@ -216,14 +215,17 @@ static NSUInteger kInstanceCounter = 0;
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-    [FLUTTER_APP resume];
     [BoostMessageChannel didDisappearPageContainer:^(NSNumber *result) {}
                                                 pageName:_name
                                                   params:_params
                                                 uniqueId:self.uniqueIDString];
-    [super viewDidDisappear:animated];
-    [FLUTTER_APP resume];
-    
+//  instead of calling [super viewDidDisappear:animated];, call super's super
+    struct objc_super target = {
+        .super_class = class_getSuperclass([FlutterViewController class]),
+        .receiver = self,
+    };
+    NSMethodSignature * (*callSuper)(struct objc_super *, SEL, BOOL animated) = (__typeof__(callSuper))objc_msgSendSuper;
+    callSuper(&target, @selector(viewDidDisappear:), animated);
 }
 
 - (void)installSplashScreenViewIfNecessary {
