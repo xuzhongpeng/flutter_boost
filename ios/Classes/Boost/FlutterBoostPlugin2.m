@@ -164,4 +164,8 @@
                                         forName:name];
 }
 
+- (void)detach{
+    [[self application].flutterProvider detach];
+}
+
 @end

@@ -46,4 +46,6 @@
 
 - (FLBVoidCallback)addEventListener:(FLBEventListener)listner
                             forName:(NSString *)name;
+
+- (void)detach;
 @end
